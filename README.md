@@ -1,8 +1,9 @@
 # 3-Tier-Board-Project
 
 ## 1. Introduction
+This project implements a bulletin board system based on a 3-Tier architecture to achieve efficient and scalable system design.
 
----
+--- 
 ## 2. Architecture Design
 
 ---
