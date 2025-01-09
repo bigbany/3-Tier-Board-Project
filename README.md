@@ -53,12 +53,132 @@ The administrator can access and manage the resources in the private subnet thro
 
 
 ## 4. Implementation Details
+### Instance Specifications
+| Role            | AMI                   | Instance Type | Key Pair | Public IP | Allowed Ports   | Storage       |
+|------------------|-----------------------|---------------|----------|-----------|-----------------|---------------|
+| **Bastion**     | Amazon Linux 2 AMI    | t3.micro      | Yes      | Yes       | 22              | 8 GiB (gp3)   |
+| **WEB**         | Amazon Linux 2 AMI    | t3.micro      | Yes      | None      | 22, 80          | 8 GiB (gp3)   |
+| **WAS**         | Amazon Linux 2 AMI    | t3.medium     | Yes      | None      | 22, 8080        | 8 GiB (gp3)   |
+
+
+### Naming Rule & Network
+
+#### Naming Convention
+- **Format**: `<Organization>-<Subnet>-<AZ>-<Function>`
+- **Separator**: `-`
+- **Order**: Organization - Subnet - AZ - Function
+
+#### Network Configuration
+
+| VPC             | Region           | AZ | Public Subnet         | Routing Table    | IPv4 CIDR      | Private Subnet       | Routing Table            | IPv4 CIDR      |
+|------------------|------------------|----|-----------------------|------------------|----------------|-----------------------|--------------------------|----------------|
+| **2MIR-VPC**    | ap-northeast-2   | A  | 2MIR-PRI-A            | PUB-RT           | 172.16.10.0/24 | 2MIR-PRI-A-WEB        | 2MIR-PRI-A-WEB-RT        | 172.16.11.0/24 |
+|                  |                  |    |                       |                  |                | 2MIR-PRI-A-WAS        | 2MIR-PRI-A-WAS-RT        | 172.16.12.0/24 |
+|                  |                  |    |                       |                  |                | 2MIR-PRI-A-DB         | 2MIR-PRI-A-DB-RT         | 172.16.13.0/24 |
+| **2MIR-VPC**    | ap-northeast-2   | C  | 2MIR-PRI-C            | PUB-RT           | 172.16.20.0/24 | 2MIR-PRI-C-WEB        | 2MIR-PRI-C-WEB-RT        | 172.16.21.0/24 |
+|                  |                  |    |                       |                  |                | 2MIR-PRI-C-WAS        | 2MIR-PRI-C-WAS-RT        | 172.16.22.0/24 |
+|                  |                  |    |                       |                  |                | 2MIR-PRI-C-DB         | 2MIR-PRI-C-DB-RT         | 172.16.23.0/24 |
+
+
+### ALB Configuration
+<img width="1000" alt="ex_in_alb" src="https://github.com/user-attachments/assets/a9678945-28bf-4283-a74d-591628e9f3a1" />
+
+- Traffic on **ports 80 and 443** is routed from the **External ALB (EX-ALB)** to the **web server**.
+- Traffic on **port 8080** is routed from the **Internal ALB (IN-ALB)** to the **WAS (Web Application Server)**.
+- Target groups were created for:
+  - **EX-ALB** on **port 80** and **port 443** to route traffic to the web server.
+  - **IN-ALB** on **port 8080** to route traffic to the WAS (Web Application Server).
+- An **SSL/TLS certificate** was issued and attached to the **EX-ALB** using **AWS Certificate Manager (ACM)** to enable secure HTTPS connections on **port 443**.
+- The load balancers distribute traffic using the **Round Robin (RR)** algorithm to ensure even distribution across target instances.
+
+### ASG Configuration
+<img width="1000" alt="asg_group" src="https://github.com/user-attachments/assets/9d3bb3d2-8e24-4998-9975-487b96d88cde"/>
+
+Auto Scaling Groups (ASG) were configured for each layer to handle traffic loads effectively.
+
+### Web Server to WAS Communication
+
+- The communication between the web server and WAS is handled using **mod_proxy**.
+- While there are multiple options, such as **mod_proxy** and **mod_jk**, **mod_proxy** was chosen for its versatility and simplicity in configuration.
+
+| Feature                     | **mod_proxy**                                    | **mod_jk**                                 |
+|-----------------------------|--------------------------------------------------|-------------------------------------------|
+| **Purpose**                 | General-purpose reverse proxy module            | Specialized module for communication with Tomcat servers |
+| **Protocol Support**        | Supports HTTP, HTTPS, and AJP protocols          | Primarily supports AJP protocol            |
+| **Configuration Simplicity**| Easier to configure                              | More complex, requires additional settings |
+| **Flexibility**             | Can be used for non-Tomcat servers as well       | Designed specifically for Tomcat servers   |
+| **Performance**             | Slightly lower performance with AJP compared to mod_jk | Optimized for AJP communication            |
+| **Load Balancing**          | Built-in support with mod_proxy_balancer         | Built-in support with robust features      |
+| **Compatibility**           | Works with Apache HTTP Server 2.2+              | May require additional modules for newer versions |
+| **Use Case**                | Recommended for general use and simpler setups   | Ideal for legacy Tomcat applications requiring AJP |
+
+
+### Session Clustering with Redis
+<img width="1000" alt="redis" src="https://github.com/user-attachments/assets/205cb871-7c19-4d7e-bfa4-0ffb426b0b7c"/>
+
+- To maintain session information across multiple WAS instances, **Redis** was used for session clustering.
+- The **session manager** in Tomcat was configured to integrate with Redis, enabling seamless session sharing and consistency across all WAS nodes.
 
 ---
 
 
 ## 5. Setup & Deployment
+### Summary of Steps:
+1. Configure EC2 instances.
+2. Set up ALB (Application Load Balancer) and Target Groups (TG).
+3. Set up **RDS (Relational Database Service)** for the database layer.
+4. Set up **ElastiCache (Redis)** for session clustering and caching.
+5. Install and configure the web server.
+6. Install and configure the WAS (Web Application Server).
+7. Create AMIs for the configured EC2 instances and set up Auto Scaling Groups (ASG).
+8. Update the Target Groups with the newly created ASG instances.
 
+### 5-1. Configure EC2 instances
+<img width="1000" alt="ec2instance" src="https://github.com/user-attachments/assets/0221a836-a989-42f2-b77e-7ff8a4886882" />
+The EC2 instances are configured according to the setup described above.
+
+### 5-2. Set up ALB (Application Load Balancer) and Target Groups (TG).
+<img width="1000" alt="userflow" src="https://github.com/user-attachments/assets/5b6fe1f4-8a35-4a87-b0ab-083ac94367bb" />
+
+The ALB and Target Groups are configured according to the setup described above.
+
+### 5-3. Set up **RDS (Relational Database Service)** for the database layer.
+<img width="1000" alt="image" src="https://github.com/user-attachments/assets/d1e608d2-84c3-4d28-b74c-993853000a56" />
+
+- **RDS MySQL** has been configured within the private subnet as a **Multi-AZ deployment**.
+
+#### **Multi-AZ Deployment Features:**
+1. **High Availability**: Ensures minimal downtime by maintaining a standby replica in a different Availability Zone (AZ).
+2. **Automatic Failover**: In the event of an AZ failure, the standby instance automatically becomes the primary.
+3. **Data Durability**: Synchronous replication between primary and standby instances ensures consistent data.
+4. **Read Consistency**: Only the primary instance handles writes, while the standby remains in sync.
+5. **Managed Backup**: AWS RDS automatically performs backups on the primary instance, replicated to the standby.
+
+This setup provides enhanced reliability and resilience for database operations.
+
+### 5-4. Set up **ElastiCache (Redis)** for session clustering and caching.
+
+
+<div style="display: flex; flex-direction: row; gap: 10px;">
+    <img width="500" alt="create_redis_cluster" src="https://github.com/user-attachments/assets/c31ccdb0-3300-4cea-890a-6b8ebb170e20" />
+    <img width="500" alt="cluster_setting" src="https://github.com/user-attachments/assets/2a1b1e1b-85b5-45cf-9db0-aeab78283b94" />
+</div>
+
+- **Cluster Mode**: Disabled to reduce costs.  
+  - Enabling cluster mode improves availability and scalability.
+
+- **Node Type**: Configured with the smallest capacity, **cache.t3.micro**.
+
+- **VPC Configuration**: Set to the same VPC as the currently running services.
+
+### 5-5. Install and configure the web server.
+
+### 5-6. Install and configure the WAS (Web Application Server).
+
+### 5-7. Create AMIs for the configured EC2 instances and set up Auto Scaling Groups (ASG).
+
+
+### 5-8. Update the Target Groups with the newly created ASG instances.
 ---
 
 
