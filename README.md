@@ -173,7 +173,58 @@ This setup provides enhanced reliability and resilience for database operations.
 
 ### 5-5. Install and configure the web server.
 
+#### 5-5-1. **Update the system packages**
+   ```bash
+   sudo yum update -y
+   ```
+   
+#### 5-5-2. **Install Apache HTTP server**
+   ```bash
+   sudo yum install httpd -y
+   ```
+
+#### 5-5-3. **Enable, start, and check the status of the Apache HTTP server**
+   ```bash
+   sudo systemctl enable httpd
+   sudo systemctl start httpd
+   sudo systemctl status httpd
+   ```
+<img width=800 alt="apachstatus" src="https://github.com/user-attachments/assets/d2b3f51f-4fff-4835-9ddf-49e0da42163e" />
+
+You can verify that the httpd (web server) is running.
+
+#### 5-5-4. **Integrate Apache with Tomcat - Configure Proxy Settings**
+   ```bash
+   cd /etc/httpd/conf.d
+   sudo vi virtualhost.conf
+   ```
+<img width=800 alt="mod_proxy" src="https://github.com/user-attachments/assets/0ba0af8c-9c71-4a16-a28c-44a2686f6f06"/>
+
+- All incoming traffic on **port 80** is forwarded to the **IN-ALB** for further processing.
+  
 ### 5-6. Install and configure the WAS (Web Application Server).
+
+#### 5-6-1. **Download Tomcat binary and Extract**
+   ```bash
+   wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.78/bin/apache-tomcat-9.0.78.tar.gz
+   tar xvf apache-tomcat-9.0.78.tar.gz 
+   ```
+#### 5-6-2. **Move tomcat file**
+   ```bash
+   mv apache-tomcat-9.0.78 ./tomcat9 
+   ```
+
+#### 5-6-3. Start and Test Tomcat9 Operation
+   ```bash
+   cd /usr/local/lib/tomcat9/bin
+   ./start.sh
+   ```
+<div style="display: flex; flex-direction: row; gap: 10px; justify-content: center; align-items: center;">
+    <img width="400" alt="tomcat_check" src="https://github.com/user-attachments/assets/c2962126-3cc2-4ead-8347-8f707c84a13b"/>
+    <img width="400" alt="tomcat_page" src="https://github.com/user-attachments/assets/dc590776-6728-4158-a834-4b602673e4f7"/>
+</div>
+- Verify Tomcat is Running Successfully
+
 
 ### 5-7. Create AMIs for the configured EC2 instances and set up Auto Scaling Groups (ASG).
 
