@@ -307,7 +307,7 @@ You can verify that the httpd (web server) is running.
 
 ## 8. References
  [petclinic source code](https://github.com/SteveKimbespin/petclinic_btc/)
- 
+ [sample application](fr.slideshare.net/AntoineRey/spring-framework-petclinic-sample-application) 
  [tomcat-redis-session-manager](https://github.com/ran-jit/tomcat-cluster-redis-session-manager)
  
 
