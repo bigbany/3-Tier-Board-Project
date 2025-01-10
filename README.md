@@ -223,37 +223,93 @@ You can verify that the httpd (web server) is running.
     <img width="400" alt="tomcat_check" src="https://github.com/user-attachments/assets/c2962126-3cc2-4ead-8347-8f707c84a13b"/>
     <img width="400" alt="tomcat_page" src="https://github.com/user-attachments/assets/dc590776-6728-4158-a834-4b602673e4f7"/>
 </div>
-- Verify Tomcat is Running Successfully
 
++ Verify Tomcat is Running Successfully
+
+#### 5-6-4. Setting Connection with Session Clustering
+   ```bash
+   wget https://github.com/ran-jit/tomcat-cluster-redis-session-manager/releases/download/2.0.4/tomcat-cluster-redis-session-manager.zip
+   sudo cp tomcat-cluster-redis-session-manager/lib/* /usr/local/lib/tomcat9/lib/
+   sudo cp tomcat-cluster-redis-session-manager/conf/*
+   ```
+- Copy Redis Session Manager folder to Tomcat's lib,conf Directory
+
+   ```bash
+   sudo vi /usr/local/lib/tomcat9/conf/redis-data-cache.properties
+   ```
+<img width="1000" alt="properties" src="https://github.com/user-attachments/assets/6410ff4f-b3d9-454a-8283-4ff917f2753f" />
+
+- Fill in the Redis endpoint to be used as the host address.
+
+   ```bash
+   sudo vi /usr/local/lib/tomcat9/conf/context.xml
+   ```
+<img width="1000" alt="context" src="https://github.com/user-attachments/assets/f4db2af5-2b20-4e85-8c43-6ef21ea87bdd" />
+
+- Register Reids handler, manager to Tomcat Conf
+
+#### 5-6-5. Modify and Deploy Source Code
+   ```bash
+   cd /usr/local/lib
+   git clone https://github.com/bigbany/3-Tier-Board-Project.git
+   ```
+- git clone
+
+
+<img width="1000" alt="db_setting" src="https://github.com/user-attachments/assets/eb95e160-e13f-4e96-97c7-57ccc39c0b88" />
+- Update Database Configuration in `pom.xml`
+
+   ```bash
+   cd /usr/local/lib/3-Tier-Board-Project
+   ./mvnw package
+   ```
+<img width=1000 alt="source_build" src="https://github.com/user-attachments/assets/accaaf2e-d954-4258-9c18-1e494fdc33e4">
+
+- Build the Source Code
+
+   ```bash
+   sudo cp ./target/petclinic.war /usr/local/lib/tomcat9/webapps
+   ```
+- Copy the Built WAR File to Tomcat's Default Deployment Directory
+
+<img width=1000 alt="source_output" src="https://github.com/user-attachments/assets/7595e01b-5035-4d80-82d1-c71df64e4086" />
+- Verify the Website is running Successfully 
 
 ### 5-7. Create AMIs for the configured EC2 instances and set up Auto Scaling Groups (ASG).
-
+- Create AMIs and launch templates for the **Web Server** and **WAS**, then configure Auto Scaling Groups (ASG) with scale-in protection and scaling policies.
+- metric type is **Average CPU Utilization** and target value was set to **30**.
 
 ### 5-8. Update the Target Groups with the newly created ASG instances.
+- Configure ALB Target Groups with ASG
+
 ---
 
 
 ## 6. Testing & Results
+### Auto Scaling Test with CPU Load
 
+- **Scenario**: Simulated CPU load on the **Web Server** using the `stress` command:
+  ```bash
+  stress --cpu 2 --timeout 900
 ---
-
+- Initially, the ASG had 2 instances.
+- During the CPU load, the ASG scaled up to 4 instances.
+- After stopping the load, the ASG scaled back down to 2 instances.
 
 ## 7. Challenges & Improvements
+- Integrated **Tomcat** with **Redis** to enable session persistence, ensuring seamless user experiences across multiple server instances.
+- Gained a thorough understanding of the **3-Tier Architecture** concept and the roles of **Web Server** and **WAS**.
+- Learned how to configure **EC2**, **RDS**, and **ElastiCache**, and developed skills in integrating **Web** and **WAS**, including session management.
+- Enhanced capabilities as a cloud engineer through hands-on experience in troubleshooting and resolving issues during these configurations.
 
 ---
 
 
-## 8. Project Structure
-
----
-
-
-## 9. Usage
-
----
-
-
-## 10. References
+## 8. References
+ [petclinic source code](https://github.com/SteveKimbespin/petclinic_btc/)
+ 
+ [tomcat-redis-session-manager](https://github.com/ran-jit/tomcat-cluster-redis-session-manager)
+ 
 
 ---
 
