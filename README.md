@@ -90,7 +90,7 @@ Route53에 등록된 도메인에 사용자가 접근하면, 요청은 Internet 
 - **AWS Certificate Manager (ACM)**를 사용해 SSL/TLS 인증서를 발급받고, EX-ALB에 연결하여 443번 포트에서 HTTPS 보안 연결을 지원하도록 구성하였습니다.
 - 로드 밸런서는 라운드 로빈(Round Robin, RR) 알고리즘을 사용해 트래픽을 각 대상 인스턴스에 고르게 분산시킵니다.
 
-### ASG 설
+### ASG 설정
 <img width="1000" alt="asg_group" src="https://github.com/user-attachments/assets/9d3bb3d2-8e24-4998-9975-487b96d88cde"/>
 
 각 계층별로 ASG를 설정하여 트래픽 변화에 유연하게 대응하도록 구성하였습니다.
