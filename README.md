@@ -80,7 +80,7 @@ Route53에 등록된 도메인에 사용자가 접근하면, 요청은 Internet 
 |                  |                  |    |                       |                  |                | 2MIR-PRI-C-DB         | 2MIR-PRI-C-DB-RT         | 172.16.23.0/24 |
 
 
-### ALB 설
+### ALB 설정
 <img width="1000" alt="ex_in_alb" src="https://github.com/user-attachments/assets/a9678945-28bf-4283-a74d-591628e9f3a1" />
 
 - 포트 80 및 443의 트래픽은 외부 ALB에서 웹 서버로 라우팅
